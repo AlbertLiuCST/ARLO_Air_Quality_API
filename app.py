@@ -2,7 +2,7 @@ from flask import Flask, jsonify, make_response,request
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Date, cast
-from flask_cors import CORS, cross_origin
+#from flask_cors import CORS, cross_origin
 import jwt
 import time
 import datetime
@@ -15,7 +15,7 @@ app.config['SECRET_KEY'] = 'thisissecret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-cors = CORS(app, resources={r"/records_test": {"origins": "http://localhost:3000"}})
+#cors = CORS(app, resources={r"/readings": {"origins": "http://localhost:3000"}})
 
 ### swagger specific ###
 SWAGGER_URL = '/swagger'
@@ -67,15 +67,18 @@ def token_required(f):
 
 
 @app.route("/readings", methods=['POST'])
-@cross_origin(origin='localhost',headers=['Content-Type','application/json'])
+#@cross_origin(origin='localhost',headers=['Content-Type','application/json'])
 def records_test():
     data = request.get_json()
-    app.logger.warning(data)
     recordsTestData = Records_test.query.all()
     output = []
-    start = data['timeStart']
-    end = data['timeEnd']
+    start = data['Start_date']
+    end = data['End_date']
     deviceId = data['device_id']
+    boolTemp = data['Temperature']
+    boolHum = data['Humidity']
+    boolTVOC = data['TVOC']
+    boolC02 = data['C02']
 
     date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d')
     timeStart = time.mktime(date_time_Start.timetuple())
@@ -86,19 +89,20 @@ def records_test():
     dateStart = date_time_Start.date()
     dateEnd = date_time_End.date()
 
-    # recordsDataFilter = db.Records_test.query.filter(Records_test.timestamp.between(dateStart, dateEnd))
-
     recordsDataFilter = db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter(cast(Records_test.timestamp,Date).between(dateStart, dateEnd)).all()
-    # recordsDataFilter = db.session.query(Records_test)
 
     for i in recordsDataFilter:
         records_test_data = {}
         records_test_data['record_id'] = i.record_id
         records_test_data['device_id'] = i.device_id
-        records_test_data['temp'] = i.temp
-        records_test_data['humidity'] = i.humidity
-        records_test_data['co2'] = i.co2
-        records_test_data['tvoc'] = i.tvoc
+        if boolTemp :
+            records_test_data['temp'] = i.temp
+        if boolHum :
+            records_test_data['humidity'] = i.humidity
+        if boolC02 :
+            records_test_data['co2'] = i.co2
+        if boolTVOC :
+            records_test_data['tvoc'] = i.tvoc
         records_test_data['timestamp'] = i.timestamp
         output.append(records_test_data)
     return jsonify({'records_test_data' : output})
@@ -146,4 +150,4 @@ def login():
     return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
