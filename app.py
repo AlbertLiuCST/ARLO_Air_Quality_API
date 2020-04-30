@@ -2,6 +2,7 @@ from flask import Flask, jsonify, make_response,request
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Date, cast
+from flask_cors import CORS, cross_origin
 import jwt
 import time
 import datetime
@@ -14,6 +15,7 @@ app.config['SECRET_KEY'] = 'thisissecret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+cors = CORS(app, resources={r"/records_test": {"origins": "http://localhost:3000"}})
 
 ### swagger specific ###
 SWAGGER_URL = '/swagger'
@@ -65,8 +67,10 @@ def token_required(f):
 
 
 @app.route("/records_test", methods=['POST'])
+@cross_origin(origin='localhost',headers=['Content-Type','application/json'])
 def records_test():
     data = request.get_json()
+    app.logger.warning(data)
     recordsTestData = Records_test.query.all()
     output = []
     start = data['timeStart']
