@@ -72,10 +72,10 @@ def records_test():
     start = data['timeStart']
     end = data['timeEnd']
 
-    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
+    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d')
     timeStart = time.mktime(date_time_Start.timetuple())
 
-    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
+    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d')
     timeEnd = time.mktime(date_time_End.timetuple())
 
     dateStart = date_time_Start.date()
