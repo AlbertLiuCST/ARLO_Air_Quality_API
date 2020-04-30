@@ -1,14 +1,17 @@
 from flask import Flask, jsonify, make_response,request
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Date, cast
 import jwt
+import time
 import datetime
+from datetime import date
 from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'thisissecret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost/postgres'
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -25,7 +28,28 @@ SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
 app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
 ### end swagger specific ###
 
-##setup flask jwt
+#Create Device_test object
+class Device_test(db.Model):
+    __tablename__ = 'device_test'
+    device_id = db.Column(db.Integer, primary_key=True)
+    device_name = db.Column(db.String(100))
+    location_name = db.Column(db.String(100))
+    device_lng = db.Column(db.Float)
+    device_lat = db.Column(db.Float)
+
+# Create records_test object
+class Records_test(db.Model):
+    __tablename__ = 'records_test'
+    record_id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(db.String(100))
+    temp = db.Column(db.Float)
+    humidity = db.Column(db.Float)
+    co2 = db.Column(db.Float)
+    tvoc = db.Column(db.Float)
+    timestamp = db.Column(db.DateTime(timezone=True))
+
+
+##setup flask jwt token
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -39,46 +63,62 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
-class artist(db.Model):
-    __tablename__ = 'artist'
-    idartist = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    about = db.Column(db.String(100))
-    imageurl = db.Column(db.String(200))
+
+@app.route("/records_test", methods=['GET'])
+def records_test():
+    data = request.get_json()
+    recordsTestData = Records_test.query.all()
+    output = []
+    start = data['timeStart']
+    end = data['timeEnd']
+
+    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
+    timeStart = time.mktime(date_time_Start.timetuple())
+
+    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
+    timeEnd = time.mktime(date_time_End.timetuple())
+
+    dateStart = date_time_Start.date()
+    dateEnd = date_time_End.date()
+
+    # recordsDataFilter = db.Records_test.query.filter(Records_test.timestamp.between(dateStart, dateEnd))
+    recordsDataFilter = db.session.query(Records_test).filter(cast(Records_test.timestamp,Date).between(dateStart, dateEnd)).all()
+
+    for i in recordsTestData:
+        itime = i.timestamp
+        if start > i.timestamp & end < i.timestamp:
+            records_test_data = {}
+            records_test_data['record_id'] = i.record_id
+            records_test_data['device_id'] = i.device_id
+            records_test_data['temp'] = i.temp
+            records_test_data['humidity'] = i.humidity
+            records_test_data['co2'] = i.co2
+            records_test_data['tvoc'] = i.tvoc
+            records_test_data['timestamp'] = i.timestamp
+            output.append(records_test_data)
+    return jsonify({'records_test_data' : output})
+
+
+@app.route("/device_test", methods=['GET'])
+def device_test():
+    deviceTestData = Device_test.query.all()
+    output = []
+
+    for i in deviceTestData:
+        device_test_data = {}
+        device_test_data['device_id'] = i.device_id
+        device_test_data['device_name'] = i.device_name
+        device_test_data['location_name'] = i.location_name
+        device_test_data['device_lng'] = i.device_lng
+        device_test_data['device_lat'] = i.device_lat
+        output.append(device_test_data)
+    return jsonify({'device_test_data' : output})
 
 @app.route("/")
 def home():
     return "<p>Hello World main page<p>"
 
-@app.route("/page")
-def page():
-    return "<p>Hello World page!~~<p>"
-
-@app.route("/artist", methods=['GET'])
-def artistFun():
-    artists = artist.query.all()
-
-    output = []
-
-    for art in artists:
-        art_data = {}
-        art_data['idartist'] = art.idartist
-        art_data['name'] = art.name
-        art_data['about'] = art.about
-        art_data['imageurl'] = art.imageurl
-        output.append(art_data)
-    return jsonify({'artists' : output})
-
-@app.route("/addart", methods=['POST'])
-def artistAdd():
-    data = request.get_json()
-    new_user = artist( name=data['name'], about=data['about'], imageurl=data['imageurl'])
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({'message' : 'New user created!'})
-
 @app.route('/unprotected')
-@token_required
 def unprotected():
     return jsonify({'message' : 'Anyone can see this!'})
 
