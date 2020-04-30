@@ -64,7 +64,7 @@ def token_required(f):
     return decorated
 
 
-@app.route("/records_test", methods=['GET'])
+@app.route("/records_test", methods=['POST'])
 def records_test():
     data = request.get_json()
     recordsTestData = Records_test.query.all()
@@ -87,18 +87,16 @@ def records_test():
     recordsDataFilter = db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter(cast(Records_test.timestamp,Date).between(dateStart, dateEnd)).all()
     # recordsDataFilter = db.session.query(Records_test)
 
-    for i in recordsTestData:
-        itime = i.timestamp
-        if start > i.timestamp & end < i.timestamp:
-            records_test_data = {}
-            records_test_data['record_id'] = i.record_id
-            records_test_data['device_id'] = i.device_id
-            records_test_data['temp'] = i.temp
-            records_test_data['humidity'] = i.humidity
-            records_test_data['co2'] = i.co2
-            records_test_data['tvoc'] = i.tvoc
-            records_test_data['timestamp'] = i.timestamp
-            output.append(records_test_data)
+    for i in recordsDataFilter:
+        records_test_data = {}
+        records_test_data['record_id'] = i.record_id
+        records_test_data['device_id'] = i.device_id
+        records_test_data['temp'] = i.temp
+        records_test_data['humidity'] = i.humidity
+        records_test_data['co2'] = i.co2
+        records_test_data['tvoc'] = i.tvoc
+        records_test_data['timestamp'] = i.timestamp
+        output.append(records_test_data)
     return jsonify({'records_test_data' : output})
 
 
