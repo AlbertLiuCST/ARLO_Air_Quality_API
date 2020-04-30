@@ -78,7 +78,7 @@ def records_test():
     boolTemp = data['Temperature']
     boolHum = data['Humidity']
     boolTVOC = data['TVOC']
-    boolC02 = data['C02']
+    boolCO2 = data['CO2']
 
     date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d')
     timeStart = time.mktime(date_time_Start.timetuple())
@@ -99,7 +99,7 @@ def records_test():
             records_test_data['temp'] = i.temp
         if boolHum :
             records_test_data['humidity'] = i.humidity
-        if boolC02 :
+        if boolCO2 :
             records_test_data['co2'] = i.co2
         if boolTVOC :
             records_test_data['tvoc'] = i.tvoc

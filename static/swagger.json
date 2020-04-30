@@ -24,24 +24,10 @@
     }
   ],
   "paths": {
-    "/request": {
-      "get": {
-        "tags": [
-          "dummy get request"
-        ],
-        "summary": "Returns Requests",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/components/schemas/dummyGetRequest"
-            }
-          }
-        }
-      },
+    "/readings": {
       "post": {
         "tags": [
-          "dummy post Request"
+          "Post Reading"
         ],
         "summary": "Create a new request system",
         "requestBody": {
@@ -50,7 +36,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/dummyRequestPostBody"
+                "$ref": "#/components/schemas/ReadingsRequest"
               }
             }
           }
@@ -62,7 +48,7 @@
           "201": {
             "description": "OK",
             "schema": {
-              "$ref": "#/components/schemas/id"
+              "$ref": "#/components/schemas/ReadingsRequest"
             }
           },
           "400": {
@@ -71,79 +57,17 @@
         }
       }
     },
-    "/readings/device/{id}": {
-      "parameters": [
-        {
-          "name": "id",
-          "in": "path",
-          "required": true,
-          "description": "ID of the device that we want to match",
-          "type": "string"
-        }
-      ],
-      "get": {
-        "tags": [
-          "device with id Request"
-        ],
-        "summary": "Get device request with given ID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "description": "device request w id",
-            "schema": {
-              "$ref": "#/components/schemas/device"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/components/schemas/dummy"
-            }
-          },
-          "400": {
-            "description": "Failed. Bad request."
-          },
-          "404": {
-            "description": "Failed. The device is not found."
-          }
-        }
-      }
-    },
-    "/device": {
-      "parameters": [
-        {
-          "name": "device",
-          "in": "path",
-          "required": true,
-          "description": "returns data associated to devices",
-          "type": "string"
-        }
-      ],
+    "/devices": {
       "get": {
         "tags": [
           "Devices Request"
         ],
         "summary": "Get devices request",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "description": "Devices Request id",
-            "schema": {
-              "$ref": "#/components/schemas/device"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/components/schemas/dummyGetRequest"
+              "$ref": "#/components/schemas/devices"
             }
           },
           "400": {
@@ -158,44 +82,55 @@
   },
   "components": {
     "schemas": {
-      "device": {
+      "devices": {
         "type": "object",
         "properties": {
-          "device1": {
-            "name": "string",
-            "id": "string",
-            "location": "string",
-            "gps": {
-              "lat": "string",
-              "long": "string"
-            }
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "location": {
+            "type": "string"
+          },
+          "device_lng": {
+            "type": "float"
+
+          },
+          "device_lat": {
+            "type": "float"
+
           }
         }
-      }
-    },
-    "dummyRequestPostBody": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "email"
-        }
-      }
-    },
-    "dummyGetRequest": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "email"
+      },
+      "ReadingsRequest": {
+        "type": "object",
+        "properties": {
+          "device_id": {
+            "type": "integer",
+            "minimum": "1"
+          },
+          "Temperature": {
+            "type": "boolean"
+          },
+          "Humidity": {
+            "type": "boolean"
+          },
+          "TVOC": {
+            "type": "boolean"
+          },
+          "CO2": {
+            "type": "boolean"
+          },
+          "Start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "End_date": {
+            "type": "string",
+            "format": "date"
+          }
         }
       }
     }
