@@ -1,11 +1,11 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "description": "jameson",
+    "description": "",
     "version": "1.0.0",
     "title": "ARLO-Air-Quality-API",
     "contact": {
-      "email": "jameson.cheong@gmail.com"
+      "email": ""
     },
     "license": {
       "name": "MIT",

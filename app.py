@@ -66,7 +66,7 @@ def token_required(f):
     return decorated
 
 
-@app.route("/records_test", methods=['POST'])
+@app.route("/readings", methods=['POST'])
 @cross_origin(origin='localhost',headers=['Content-Type','application/json'])
 def records_test():
     data = request.get_json()
@@ -104,7 +104,7 @@ def records_test():
     return jsonify({'records_test_data' : output})
 
 
-@app.route("/device_test", methods=['GET'])
+@app.route("/devices", methods=['GET'])
 def device_test():
     deviceTestData = Device_test.query.all()
     output = []
