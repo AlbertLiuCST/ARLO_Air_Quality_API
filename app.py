@@ -71,6 +71,7 @@ def records_test():
     output = []
     start = data['timeStart']
     end = data['timeEnd']
+    deviceId = data['device_id']
 
     date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d')
     timeStart = time.mktime(date_time_Start.timetuple())
@@ -82,7 +83,9 @@ def records_test():
     dateEnd = date_time_End.date()
 
     # recordsDataFilter = db.Records_test.query.filter(Records_test.timestamp.between(dateStart, dateEnd))
-    recordsDataFilter = db.session.query(Records_test).filter(cast(Records_test.timestamp,Date).between(dateStart, dateEnd)).all()
+
+    recordsDataFilter = db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter(cast(Records_test.timestamp,Date).between(dateStart, dateEnd)).all()
+    # recordsDataFilter = db.session.query(Records_test)
 
     for i in recordsTestData:
         itime = i.timestamp
