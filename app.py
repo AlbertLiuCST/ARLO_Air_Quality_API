@@ -60,8 +60,6 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.args.get('token') #http://127.0.0.1:5000/route?token=<token key>
-        # token = request.cookies.get('token')
-        # token = session.get('token')
         if not token:
             return jsonify({'message' : 'Token is missing!'}), 401
         try:
@@ -73,7 +71,7 @@ def token_required(f):
 
 #Post request by passing json payload and return specified data 
 @app.route("/readings", methods=['POST'])
-# @cross_origin(origin='localhost',headers=['Content-Type','application/json'])
+@token_required
 @cross_origin()
 def records_test():
     data = request.get_json()
@@ -142,17 +140,13 @@ def protected():
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
-    #auth = request.authorization
     auth = request.get_json()
-
-    #auth = request.form
 
     if not auth or not auth['username'] or not auth['password'] :
         return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
    
     if auth and auth['password'] == 'password':
         token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=15)},app.config['SECRET_KEY'])
-        resp = make_response("login successfully",200)
         return jsonify({'token' : token.decode('UTF-8')})
 
     return make_response('Could not verify', 401)
