@@ -18,8 +18,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
+
 # cors = CORS(app, resources={r"/readings": {"origins": "http://localhost:3000"}})
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
 
 ### swagger specific ###
 SWAGGER_URL = '/swagger'
@@ -71,6 +73,7 @@ def token_required(f):
 
 #Post request by passing json payload and return specified data 
 @app.route("/readings", methods=['POST'])
+
 @token_required
 @cross_origin()
 def records_test():
