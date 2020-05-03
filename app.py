@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, make_response,request
+from flask import Flask, jsonify, make_response,request, session
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Date, cast
@@ -8,15 +8,18 @@ import time
 import datetime
 from datetime import date
 from functools import wraps
+from flask_session import Session
 
+SESSION_TYPE = 'filesystem'
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'thisissecret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost/postgres'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost/postgres'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
 # cors = CORS(app, resources={r"/readings": {"origins": "http://localhost:3000"}})
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 ### swagger specific ###
 SWAGGER_URL = '/swagger'
@@ -57,6 +60,8 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.args.get('token') #http://127.0.0.1:5000/route?token=<token key>
+        # token = request.cookies.get('token')
+        # token = session.get('token')
         if not token:
             return jsonify({'message' : 'Token is missing!'}), 401
         try:
@@ -68,7 +73,7 @@ def token_required(f):
 
 #Post request by passing json payload and return specified data 
 @app.route("/readings", methods=['POST'])
-#@cross_origin(origin='localhost',headers=['Content-Type','application/json'])
+# @cross_origin(origin='localhost',headers=['Content-Type','application/json'])
 @cross_origin()
 def records_test():
     data = request.get_json()
@@ -141,17 +146,14 @@ def login():
     auth = request.get_json()
 
     #auth = request.form
-    resp = make_response(render_template('readcookie.html'))
 
     if not auth or not auth['username'] or not auth['password'] :
         return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
    
     if auth and auth['password'] == 'password':
-        token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=30)},app.config['SECRET_KEY'])
-        resp = jsonify({'login': True})
-        set_access_cookies(resp, access_token)
-        # return jsonify({'token' : token.decode('UTF-8')})
-        return resp
+        token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=15)},app.config['SECRET_KEY'])
+        resp = make_response("login successfully",200)
+        return jsonify({'token' : token.decode('UTF-8')})
 
     return make_response('Could not verify', 401)
 
