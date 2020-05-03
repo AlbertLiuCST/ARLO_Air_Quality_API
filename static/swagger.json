@@ -78,6 +78,39 @@
           }
         }
       }
+    },
+    "/login": {
+      "post": {
+        "tags": [
+          "User Authentication"
+        ],
+        "summary": "Authentication returns a token to be used for API calls",
+        "requestBody": {
+          "description": "Request Post Object",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/loginSuccess"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/components/schemas/loginSuccess"
+            }
+          },
+          "400": {
+            "description": "Failed. Bad post data."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -130,6 +163,18 @@
           "End_date": {
             "type": "string",
             "format": "date"
+          }
+        }
+      },
+      "loginSuccess": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+
           }
         }
       }
