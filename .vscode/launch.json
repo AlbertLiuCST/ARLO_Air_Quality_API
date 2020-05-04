@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "python.pythonPath": "${workspaceFolder}/server/Scripts/python.exe",
     "configurations": [
+    
         {
             "name": "Python: Flask",
             "type": "python",

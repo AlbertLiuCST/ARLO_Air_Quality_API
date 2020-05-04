@@ -9,6 +9,9 @@ Create virtualenv for window:
 3) venv\Scripts\activate
 4) pip install -r requirements.txt
 
+To deactive venv:
+venv\Scripts\deactivate
+
 Creating requirements.txt:
 1)pip freeze > requirements.txt
 
