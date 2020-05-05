@@ -1,11 +1,11 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "description": "jameson",
+    "description": "",
     "version": "1.0.0",
     "title": "ARLO-Air-Quality-API",
     "contact": {
-      "email": "jameson.cheong@gmail.com"
+      "email": ""
     },
     "license": {
       "name": "MIT",
@@ -24,24 +24,10 @@
     }
   ],
   "paths": {
-    "/request": {
-      "get": {
-        "tags": [
-          "dummy get request"
-        ],
-        "summary": "Returns Requests",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/components/schemas/dummyGetRequest"
-            }
-          }
-        }
-      },
+    "/readings": {
       "post": {
         "tags": [
-          "dummy post Request"
+          "Post Reading"
         ],
         "summary": "Create a new request system",
         "requestBody": {
@@ -50,7 +36,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/dummyRequestPostBody"
+                "$ref": "#/components/schemas/ReadingsRequest"
               }
             }
           }
@@ -62,7 +48,7 @@
           "201": {
             "description": "OK",
             "schema": {
-              "$ref": "#/components/schemas/id"
+              "$ref": "#/components/schemas/ReadingsRequest"
             }
           },
           "400": {
@@ -71,37 +57,17 @@
         }
       }
     },
-    "/readings/device/{id}": {
-      "parameters": [
-        {
-          "name": "id",
-          "in": "path",
-          "required": true,
-          "description": "ID of the device that we want to match",
-          "type": "string"
-        }
-      ],
+    "/devices": {
       "get": {
         "tags": [
-          "device with id Request"
+          "Devices Request"
         ],
-        "summary": "Get device request with given ID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "description": "device request w id",
-            "schema": {
-              "$ref": "#/components/schemas/device"
-            }
-          }
-        ],
+        "summary": "Get devices request",
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/components/schemas/dummy"
+              "$ref": "#/components/schemas/devices"
             }
           },
           "400": {
@@ -113,44 +79,35 @@
         }
       }
     },
-    "/device": {
-      "parameters": [
-        {
-          "name": "device",
-          "in": "path",
-          "required": true,
-          "description": "returns data associated to devices",
-          "type": "string"
-        }
-      ],
-      "get": {
+    "/login": {
+      "post": {
         "tags": [
-          "Devices Request"
+          "User Authentication"
         ],
-        "summary": "Get devices request",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "description": "Devices Request id",
-            "schema": {
-              "$ref": "#/components/schemas/device"
+        "summary": "Authentication returns a token to be used for API calls",
+        "requestBody": {
+          "description": "Request Post Object",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/loginSuccess"
+              }
             }
           }
+        },
+        "produces": [
+          "application/json"
         ],
         "responses": {
-          "200": {
+          "201": {
             "description": "OK",
             "schema": {
-              "$ref": "#/components/schemas/dummyGetRequest"
+              "$ref": "#/components/schemas/loginSuccess"
             }
           },
           "400": {
-            "description": "Failed. Bad request."
-          },
-          "404": {
-            "description": "Failed. The device is not found."
+            "description": "Failed. Bad post data."
           }
         }
       }
@@ -158,44 +115,67 @@
   },
   "components": {
     "schemas": {
-      "device": {
+      "devices": {
         "type": "object",
         "properties": {
-          "device1": {
-            "name": "string",
-            "id": "string",
-            "location": "string",
-            "gps": {
-              "lat": "string",
-              "long": "string"
-            }
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "location": {
+            "type": "string"
+          },
+          "device_lng": {
+            "type": "float"
+
+          },
+          "device_lat": {
+            "type": "float"
+
           }
         }
-      }
-    },
-    "dummyRequestPostBody": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "email"
+      },
+      "ReadingsRequest": {
+        "type": "object",
+        "properties": {
+          "device_id": {
+            "type": "integer",
+            "minimum": "1"
+          },
+          "Temperature": {
+            "type": "boolean"
+          },
+          "Humidity": {
+            "type": "boolean"
+          },
+          "TVOC": {
+            "type": "boolean"
+          },
+          "CO2": {
+            "type": "boolean"
+          },
+          "Start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "End_date": {
+            "type": "string",
+            "format": "date"
+          }
         }
-      }
-    },
-    "dummyGetRequest": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "email"
+      },
+      "loginSuccess": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+
+          }
         }
       }
     }
