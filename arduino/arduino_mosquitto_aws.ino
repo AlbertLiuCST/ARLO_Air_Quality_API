@@ -16,9 +16,9 @@
 #include <WiFiNINA.h>
 #include <sensirion_ess.h>
 
-#define SECRET_SSID "wifi name" //Replace with your Wifi SSID
-#define SECRET_PASS "wifi password" //Replace with your WPA2 password
-#define CLIENT_ID 0  //Replace with your device number (1 - 8)
+#define SECRET_SSID "ssid" //Replace with your Wifi SSID
+#define SECRET_PASS "password" //Replace with your WPA2 password
+#define CLIENT_ID 2  //Replace with your device number (1 - 8)
 #define MSG_SIZE 120
 #define AWS_MSG_FORMAT       \
    "{\"state\":{"                  \
@@ -37,11 +37,13 @@ int status = WL_IDLE_STATUS;     // the Wifi radio's status
 byte server[] = {34,216,131,235}; //Replace with the IP of mosquitto server
 int port = 1883; //the port of the MQTT broker
 char topicToPublish[64];
+char topicToSubscribe[64];
+char updateTopic[] = "update_arduino";
    
 // Handles messages arrived on subscribed topic(s)
 void callback(char* topic, byte* payload, unsigned int length) {
   String result;
-  Serial.print("Message arrived [");
+  Serial.println("Message arrived!! [");
   Serial.print(topic);
   Serial.print("]: ");
   for (int i=0;i<length;i++) {
@@ -104,17 +106,25 @@ WiFiClient wifiClient;
 PubSubClient mqttClient(server, port, callback, wifiClient);//Local Mosquitto Connection
 SensirionESS ess; //  Create an instance of SensirionESS
 
-
+void subscribeToUpdates() {
+  Serial.println("Subscribing to update_arduino topic...");
+  int rc = mqttClient.subscribe(updateTopic);
+  if (rc < 1) {
+    Serial.println("Failed");
+  } else {
+    Serial.println("Success");
+  }
+}
 void reconnect() {
   // Loop until we're reconnected
-  Serial.println("at reconnect");
   while (!mqttClient.connected()) {
     Serial.print("Attempting to reconnect MQTT connection...");
     // Attempt to connect
     if (mqttClient.connect(client_name)) {
-      Serial.println("connected");
+      Serial.println("Connected");
+      subscribeToUpdates();
     } else {
-      Serial.print("failed, rc=");
+      Serial.print("Could not connect: ");
       Serial.print(mqttClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
@@ -132,7 +142,6 @@ void setup() {
   }
   sprintf(client_name, "arduino%d", CLIENT_ID);
   sprintf(topicToPublish, "$aws/things/%s/shadow/update", client_name);
-  
   // Initialize the sensors; this should only fail if
   // the board is defect, or the connection isn't working. Since there's nothing
   // we can do if this fails, the code will loop forever if an error is detected
@@ -189,8 +198,7 @@ void setup() {
   
   //Local Mosquitto Connection -- Start
   if (mqttClient.connect(client_name)) {
-    // connection succeeded
-    Serial.println("Connection succeeded.");
+    subscribeToUpdates();
   } else {
       // connection failed
       // mqttClient.state() will provide more information
@@ -265,5 +273,9 @@ void loop() {
     
   // check the network connection once every 10 seconds:
   mqttClient.loop();
-  delay(30000);
+  delay(10000);
+  mqttClient.loop();
+  delay(10000);
+  mqttClient.loop();
+  delay(10000);
 }
