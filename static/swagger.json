@@ -54,13 +54,13 @@
                     "in": "query",
                     "name": "token",
                     "required": true,
-                    "description": "Book Request token",
+                    "description": "API Requests a token",
                     "schema": {
                         "$ref": "#/components/schemas/token"
                     }
                 }],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/components/schemas/ReadingsRequest"
