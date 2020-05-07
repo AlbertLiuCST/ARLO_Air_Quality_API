@@ -73,7 +73,6 @@ def token_required(f):
 
 #Post request by passing json payload and return specified data 
 @app.route("/readings", methods=['POST'])
-
 @token_required
 @cross_origin()
 def records_test():
@@ -114,6 +113,25 @@ def records_test():
         records_test_data['timestamp'] = i.timestamp
         output.append(records_test_data)
     return jsonify({'records_test_data' : output})
+
+#get the lastest recorded data for a specified device id
+@app.route("/readings/device", methods=['GET'])
+@token_required
+def records_latest():
+    output = []
+    deviceId = request.args.get('id')
+    recordsDataFilter = db.session.query(Records_test).filter(Records_test.device_id == deviceId).order_by(Records_test.record_id.desc()).first()
+ 
+    records_test_data = {}
+    records_test_data['record_id'] = recordsDataFilter.record_id
+    records_test_data['device_id'] = recordsDataFilter.device_id
+    records_test_data['temp'] = recordsDataFilter.temp
+    records_test_data['humidity'] = recordsDataFilter.humidity
+    records_test_data['co2'] = recordsDataFilter.co2
+    records_test_data['tvoc'] = recordsDataFilter.tvoc
+    records_test_data['timestamp'] = recordsDataFilter.timestamp
+    output.append(records_test_data)
+    return jsonify({'records_data' : output})
 
 #get devices information
 @app.route("/devices", methods=['GET'])
