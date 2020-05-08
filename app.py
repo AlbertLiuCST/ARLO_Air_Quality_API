@@ -87,10 +87,10 @@ def records_test():
     boolTVOC = data['TVOC']
     boolCO2 = data['CO2']
 
-    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d')
+    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M')
     timeStart = time.mktime(date_time_Start.timetuple())
 
-    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d')
+    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M')
     timeEnd = time.mktime(date_time_End.timetuple())
 
     dateStart = date_time_Start.date()
