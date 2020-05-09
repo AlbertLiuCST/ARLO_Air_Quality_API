@@ -177,11 +177,11 @@
                     },
                     "Start_date": {
                         "type": "string",
-                        "format": "date"
+                        "pattern": "date-time"
                     },
                     "End_date": {
                         "type": "string",
-                        "format": "date"
+                        "format": "date-time"
                     }
                 }
             },

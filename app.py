@@ -1,12 +1,12 @@
 from flask import Flask, jsonify, make_response,request, session
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Date, cast
+from sqlalchemy import Date, cast, DateTime, Time, extract
 from flask_cors import CORS, cross_origin
 import jwt
 import time
 import datetime
-from datetime import date
+from datetime import date, timedelta
 from functools import wraps
 from flask_session import Session
 
@@ -76,8 +76,9 @@ def token_required(f):
 @token_required
 @cross_origin()
 def records_test():
+
     data = request.get_json()
-    recordsTestData = Records_test.query.all()
+
     output = []
     start = data['Start_date']
     end = data['End_date']
@@ -87,16 +88,24 @@ def records_test():
     boolTVOC = data['TVOC']
     boolCO2 = data['CO2']
 
-    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M')
-    timeStart = time.mktime(date_time_Start.timetuple())
+    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=7)
+    # timeStart = time.mktime(date_time_Start.timetuple())
 
-    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M')
-    timeEnd = time.mktime(date_time_End.timetuple())
+    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M') + timedelta(hours=7)
+    # timeEnd = time.mktime(date_time_End.timetuple())
+
+    datetime_obj_gmt = date_time_Start.replace(tzinfo=timezone('Canada/Pacific'))
+    startTime = date_time_Start.time()
+    endTime = date_time_End.time()
+    now = datetime.datetime.now()
+    test = endTime.hour
 
     dateStart = date_time_Start.date()
     dateEnd = date_time_End.date()
-
-    recordsDataFilter = db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter(cast(Records_test.timestamp,Date).between(dateStart, dateEnd)).all()
+    db.session.configure()
+    recordsDataFilterXX= db.session.query(Records_test).filter(Records_test.device_id == deviceId).all()
+    recordsDataFilter= db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter( Records_test.timestamp.between( date_time_Start, date_time_End)).all()
+   
 
     for i in recordsDataFilter:
         records_test_data = {}
@@ -167,7 +176,7 @@ def login():
         return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
    
     if auth and auth['password'] == 'password':
-        token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=15)},app.config['SECRET_KEY'])
+        token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=120)},app.config['SECRET_KEY'])
         return jsonify({'token' : token.decode('UTF-8')})
 
     return make_response('Could not verify', 401)
