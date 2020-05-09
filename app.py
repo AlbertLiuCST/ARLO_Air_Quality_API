@@ -89,23 +89,9 @@ def records_test():
     boolCO2 = data['CO2']
 
     date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=7)
-    # timeStart = time.mktime(date_time_Start.timetuple())
-
     date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M') + timedelta(hours=7)
-    # timeEnd = time.mktime(date_time_End.timetuple())
 
-    datetime_obj_gmt = date_time_Start.replace(tzinfo=timezone('Canada/Pacific'))
-    startTime = date_time_Start.time()
-    endTime = date_time_End.time()
-    now = datetime.datetime.now()
-    test = endTime.hour
-
-    dateStart = date_time_Start.date()
-    dateEnd = date_time_End.date()
-    db.session.configure()
-    recordsDataFilterXX= db.session.query(Records_test).filter(Records_test.device_id == deviceId).all()
     recordsDataFilter= db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter( Records_test.timestamp.between( date_time_Start, date_time_End)).all()
-   
 
     for i in recordsDataFilter:
         records_test_data = {}
