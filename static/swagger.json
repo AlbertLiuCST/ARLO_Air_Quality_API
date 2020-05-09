@@ -177,11 +177,11 @@
                     },
                     "Start_date": {
                         "type": "string",
-                        "pattern": "date-time"
+                        "pattern": "2020-05-04 13:33"
                     },
                     "End_date": {
                         "type": "string",
-                        "format": "date-time"
+                        "pattern": "2020-05-08 15:28"
                     }
                 }
             },
