@@ -131,7 +131,9 @@ def records_latest():
     records_test_data['humidity'] = recordsDataFilter.humidity
     records_test_data['co2'] = recordsDataFilter.co2
     records_test_data['tvoc'] = recordsDataFilter.tvoc
-    records_test_data['timestamp'] = recordsDataFilter.timestamp
+    pacific_time_date = recordsDataFilter.timestamp.astimezone(timezone('US/Pacific'))
+    convert_date_format =datetime.datetime.strftime(pacific_time_date, '%Y-%m-%d %H:%M %Z')
+    records_test_data['timestamp'] = convert_date_format
     output.append(records_test_data)
     return jsonify({'records_data' : output})
 

@@ -82,6 +82,50 @@
                     "Devices Request"
                 ],
                 "summary": "Get devices request",
+
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/devices"
+                        }
+                    },
+                    "400": {
+                        "description": "Failed. Bad request."
+                    },
+                    "404": {
+                        "description": "Failed. The device is not found."
+                    }
+                }
+            }
+        },
+        "/readings/device": {
+
+            "get": {
+                "tags": [
+                    "Devices Request"
+                ],
+                "summary": "Get devices request",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "token",
+                        "required": true,
+                        "description": "API Requests a token",
+                        "schema": {
+                            "$ref": "#/components/schemas/token"
+                        }
+                    },
+                    {                   
+                        "in": "query",
+                        "name": "id",
+                        "required": true,
+                        "description": "API Requests a token",
+                        "schema": {
+                            "$ref": "#/components/schemas/token"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -198,6 +242,13 @@
                 }
             },
             "token": {
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    }
+                }
+            },
+            "id": {
                 "properties": {
                     "token": {
                         "type": "string"
