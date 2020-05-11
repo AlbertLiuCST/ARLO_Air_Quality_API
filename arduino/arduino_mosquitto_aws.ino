@@ -1,14 +1,21 @@
 
 /*==========================================================================
  *  Connects arduino uno wifi rev2 to mosquitto server hosted on AWS. 
+ *  By default it will send a message once every 900 seconds (15 minutes). To update this
+ *  a message can be sent to the topic "update_arduino" in the format of <deviceid>-<seconds>.
+ *  The client that accepts this will publish to the topic "update_arduino_accepted" 
+ *  For example, the message "3-60" published to "update_arduino" will update device arduino3 to 
+ *  send once every 60 seconds.
+ *  arduino3 will then publish "Accepted by arduino3" to the "update_arduino_accepted" topic
  *  IMPORTANT STEPS:
  *    - replace SECRET_SSID, SECRET_PASS
  *    - replace CLIENT_ID with the arduino device number
  *    - include library PubSubClient and WiFiNINA. if using arduino ide
  *      go to Sketch -> Include Library -> Manage Libraries -> enter name in search bar
  *    - open PubSubClient source files (in Libraries directory, this should be in the parent folder where your sketch)
- *      with any other code editor like VS Code. Open PubSubClient.h and change line 31 MQTT_KEEPALIVE value to 60
- *      (this is to match the default keep alive value of mosquitto server)! 
+ *      with any other code editor like VS Code. Open PubSubClient.h and:
+ *        - change line 26 MQTT_MAX_PACKET_SIZE to 360
+ *        - change line 31 MQTT_KEEPALIVE value to 60
  *    - Save updated PubSubClient.h and upload this sketch to board
  *  
  */
@@ -16,10 +23,12 @@
 #include <WiFiNINA.h>
 #include <sensirion_ess.h>
 
-#define SECRET_SSID "ssid" //Replace with your Wifi SSID
-#define SECRET_PASS "password" //Replace with your WPA2 password
-#define CLIENT_ID 2  //Replace with your device number (1 - 8)
+#define SECRET_SSID "<ssid>" //Replace with your Wifi SSID
+#define SECRET_PASS "<password>" //Replace with your WPA2 password
+#define CLIENT_ID 0  //Replace with your device number (1 - 8)
 #define MSG_SIZE 120
+#define MILLISECONDS 1000
+#define LOOP_SECONDS 10 //mqtt loop every 10 seconds to check for updates
 #define AWS_MSG_FORMAT       \
    "{\"state\":{"                  \
      "\"reported\":{"             \
@@ -36,20 +45,37 @@ char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as k
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 byte server[] = {34,216,131,235}; //Replace with the IP of mosquitto server
 int port = 1883; //the port of the MQTT broker
-char topicToPublish[64];
-char topicToSubscribe[64];
+char updateShadowTopic[64];
 char updateTopic[] = "update_arduino";
+char updateAcceptedTopic[] = "update_arduino_accepted";
+int intervalSeconds = 900; //default value - send message every 15 minutes
+
    
 // Handles messages arrived on subscribed topic(s)
+// payload is in format <device_id>-<seconds interval>
 void callback(char* topic, byte* payload, unsigned int length) {
-  String result;
-  Serial.println("Message arrived!! [");
-  Serial.print(topic);
-  Serial.print("]: ");
-  for (int i=0;i<length;i++) {
-    Serial.print((char)payload[i]);
-    result += (char)payload[i];
+  Serial.println("Message arrived!");
+  char message[length+1];
+  memset(message, 0, length+1);
+  for (int i = 0; i < length; i++) {
+    message[i] = (char)payload[i];
   }
+  message[length] = '\n';
+
+  char delimiter[2] = "-";
+  char* recipientId = strtok(message, delimiter);
+  char* interval = strtok(NULL, delimiter);
+  //char* intervals = strtok(message, delimiter);
+  if (atoi(recipientId) == CLIENT_ID) {
+    intervalSeconds = atoi(interval);
+    Serial.print("New interval set for: ");
+    Serial.print(intervalSeconds);
+    Serial.print(" seconds");
+    Serial.println("");
+    char acceptMsg[24];
+    sprintf(acceptMsg, "Accepted by arduino%d", CLIENT_ID);
+    publishToAWS(updateAcceptedTopic, acceptMsg);
+  } 
   Serial.println("");
 }
 
@@ -133,6 +159,21 @@ void reconnect() {
   }
 }
 
+void publishToAWS(char* topic, char* message) {
+  boolean rc = mqttClient.publish(topic, message);
+  if (rc == 0) {
+    Serial.println("Fail to publish message:");
+    Serial.println(rc);
+    Serial.print("Connection failed. MQTT client state is: ");
+    Serial.println(mqttClient.state());
+    //do not continue
+    reconnect();
+  }
+  Serial.println(message);
+  Serial.print("Published to ");
+  Serial.print(topic);
+  Serial.println("");
+}
 void setup() {
   
   //Initialize serial and wait for port to open:
@@ -141,7 +182,7 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB port only
   }
   sprintf(client_name, "arduino%d", CLIENT_ID);
-  sprintf(topicToPublish, "$aws/things/%s/shadow/update", client_name);
+  sprintf(updateShadowTopic, "$aws/things/%s/shadow/update", client_name);
   // Initialize the sensors; this should only fail if
   // the board is defect, or the connection isn't working. Since there's nothing
   // we can do if this fails, the code will loop forever if an error is detected
@@ -209,9 +250,6 @@ void setup() {
    }
 }
 
-
-
-
 void loop() {
   float temp, rh, tvoc, eco2 = -1;
   char str_temp[7];
@@ -240,17 +278,6 @@ void loop() {
     rh = ess.getHumidity();
   }
 
-  // finally, let's print those to the serial console
-  Serial.print(temp);
-  Serial.print(" ");
-  Serial.print(rh);
-  Serial.print(" ");
-  Serial.print(tvoc);
-  Serial.print(" ");
-  if (ess.getProductType() == SensirionESS::PRODUCT_TYPE_SGP30) {
-    Serial.print(eco2);
-  }
-
   Serial.print("\n");
   Serial.println("Publishing...");
   dtostrf(temp, 4, 2, str_temp);
@@ -259,23 +286,17 @@ void loop() {
   dtostrf(eco2, 4, 2, str_eco2);
   char message[MSG_SIZE];
   sprintf(message, AWS_MSG_FORMAT, CLIENT_ID, str_temp, str_rh, str_tvoc, str_eco2);
-  boolean rc = mqttClient.publish(topicToPublish, message);
-  if (rc == 0) {
-    Serial.println("Fail to publish message:");
-    Serial.println(rc);
-    Serial.print("Connection failed. MQTT client state is: ");
-    Serial.println(mqttClient.state());
-    //do not continue
-    reconnect();
+  publishToAWS(updateShadowTopic, message);
+  int currentInterval = intervalSeconds;
+  int timesToLoop = currentInterval / LOOP_SECONDS;
+  int remainder = currentInterval % LOOP_SECONDS;
+  for(int i = 0; i < timesToLoop; i++) {
+    if (currentInterval != intervalSeconds) {
+      //interval has been updated, break
+      break;
+    }
+    mqttClient.loop(); // check the network connection at least once every 10 seconds:
+    delay(10000);
   }
-  Serial.println(message);
-  Serial.println("Published to \"update\"");
-    
-  // check the network connection once every 10 seconds:
-  mqttClient.loop();
-  delay(10000);
-  mqttClient.loop();
-  delay(10000);
-  mqttClient.loop();
-  delay(10000);
+  delay(remainder * MILLISECONDS);
 }

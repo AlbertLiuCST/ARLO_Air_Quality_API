@@ -6,6 +6,7 @@ from flask_cors import CORS, cross_origin
 import jwt
 import time
 import datetime
+from pytz import timezone
 from datetime import date, timedelta
 from functools import wraps
 from flask_session import Session
@@ -89,6 +90,7 @@ def records_test():
     boolTVOC = data['TVOC']
     boolCO2 = data['CO2']
 
+
     date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=7)
     date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M') + timedelta(hours=7)
 
@@ -106,7 +108,11 @@ def records_test():
             records_test_data['co2'] = i.co2
         if boolTVOC :
             records_test_data['tvoc'] = i.tvoc
-        records_test_data['timestamp'] = i.timestamp 
+
+        pacific_time_date = i.timestamp.astimezone(timezone('US/Pacific'))
+        convert_date_format =datetime.datetime.strftime(pacific_time_date, '%Y-%m-%d %H:%M %Z')
+        records_test_data['timestamp'] = convert_date_format
+
         output.append(records_test_data)
     return jsonify({'records_test_data' : output})
 
