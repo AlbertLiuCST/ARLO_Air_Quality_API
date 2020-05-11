@@ -10,6 +10,7 @@ from pytz import timezone
 from datetime import date, timedelta
 from functools import wraps
 from flask_session import Session
+import pytz
 
 SESSION_TYPE = 'filesystem'
 app = Flask(__name__)
@@ -107,9 +108,11 @@ def records_test():
             records_test_data['co2'] = i.co2
         if boolTVOC :
             records_test_data['tvoc'] = i.tvoc
+
         pacific_time_date = i.timestamp.astimezone(timezone('US/Pacific'))
         convert_date_format =datetime.datetime.strftime(pacific_time_date, '%Y-%m-%d %H:%M %Z')
         records_test_data['timestamp'] = convert_date_format
+
         output.append(records_test_data)
     return jsonify({'records_test_data' : output})
 
@@ -148,15 +151,6 @@ def device_test():
         output.append(device_test_data)
     return jsonify({'device_test_data' : output})
 
-@app.route('/unprotected')
-def unprotected():
-    return jsonify({'message' : 'Anyone can see this!'})
-
-@app.route('/protected')
-@token_required
-def protected():
-    return jsonify({'message' : 'This only for people with valid token!'})
-
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
@@ -165,7 +159,7 @@ def login():
     if not auth or not auth['username'] or not auth['password'] :
         return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
    
-    if auth and auth['password'] == 'password':
+    if auth and auth['password'] == 'bcitairquality' and auth['username'] == 'bcitarlo':
         token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=120)},app.config['SECRET_KEY'])
         return jsonify({'token' : token.decode('UTF-8')})
 
