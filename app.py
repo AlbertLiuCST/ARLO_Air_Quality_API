@@ -39,8 +39,8 @@ app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
 ### end swagger specific ###
 
 #Create Device_test object
-class Device_test(db.Model):
-    __tablename__ = 'device_test'
+class Device_Info(db.Model):
+    __tablename__ = 'device_info'
     device_id = db.Column(db.Integer, primary_key=True)
     device_name = db.Column(db.String(100))
     location_name = db.Column(db.String(100))
@@ -48,8 +48,8 @@ class Device_test(db.Model):
     device_lat = db.Column(db.Float)
 
 # Create records_test object
-class Records_test(db.Model):
-    __tablename__ = 'records_test'
+class Records(db.Model):
+    __tablename__ = 'records'
     record_id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.String(100))
     temp = db.Column(db.Float)
@@ -94,7 +94,7 @@ def records_test():
     date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=7)
     date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M') + timedelta(hours=7)
 
-    recordsDataFilter= db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter( Records_test.timestamp.between( date_time_Start, date_time_End)).all()
+    recordsDataFilter= db.session.query(Records).filter(Records.device_id == deviceId).filter( Records.timestamp.between( date_time_Start, date_time_End)).all()
 
     for i in recordsDataFilter:
         records_test_data = {}
@@ -122,7 +122,7 @@ def records_test():
 def records_latest():
     output = []
     deviceId = request.args.get('id')
-    recordsDataFilter = db.session.query(Records_test).filter(Records_test.device_id == deviceId).order_by(Records_test.record_id.desc()).first()
+    recordsDataFilter = db.session.query(Records).filter(Records.device_id == deviceId).order_by(Records.record_id.desc()).first()
  
     records_test_data = {}
     records_test_data['record_id'] = recordsDataFilter.record_id
@@ -140,7 +140,7 @@ def records_latest():
 #get devices information
 @app.route("/devices", methods=['GET'])
 def device_test():
-    deviceTestData = Device_test.query.all()
+    deviceTestData = Device_Info.query.all()
     output = []
 
     for i in deviceTestData:
