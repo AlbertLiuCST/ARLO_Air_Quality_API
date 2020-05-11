@@ -145,15 +145,6 @@ def device_test():
         output.append(device_test_data)
     return jsonify({'device_test_data' : output})
 
-@app.route('/unprotected')
-def unprotected():
-    return jsonify({'message' : 'Anyone can see this!'})
-
-@app.route('/protected')
-@token_required
-def protected():
-    return jsonify({'message' : 'This only for people with valid token!'})
-
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
