@@ -12,6 +12,10 @@ from functools import wraps
 from flask_session import Session
 import pytz
 
+import sys, time
+from daemon import Daemon
+
+
 SESSION_TYPE = 'filesystem'
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'thisissecret'
@@ -37,6 +41,14 @@ SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
 )
 app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
 ### end swagger specific ###
+
+#Defind imported daemon class and override run method
+class MyDaemon(Daemon):
+        def run(self):
+                # while True:
+                #         time.sleep(1)
+                app.run(debug=True)
+
 
 #Create Device_test object
 class Device_Info(db.Model):
@@ -168,4 +180,18 @@ def login():
     return make_response('Could not verify', 401)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    daemon = MyDaemon('/usr/bin/arlo-api-daemon.pid')
+        if len(sys.argv) == 2:
+                if 'start' == sys.argv[1]:
+                        daemon.start()
+                elif 'stop' == sys.argv[1]:
+                        daemon.stop()
+                elif 'restart' == sys.argv[1]:
+                        daemon.restart()
+                else:
+                        print "Unknown command.."
+                        sys.exit(2)
+                sys.exit(0)
+        else:
+                print "usage: %s start|stop|restart" % sys.argv[0]
+                sys.exit(2)
