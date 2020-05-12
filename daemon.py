@@ -62,6 +62,7 @@ class Daemon:
                 os.remove(self.pidfile)
  
         def start(self):
+                print("starting daemon...........")
                 """
                 Start the daemon
                 """
