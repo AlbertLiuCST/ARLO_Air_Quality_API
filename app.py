@@ -92,7 +92,7 @@ def records_test():
     date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=7)
     date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M') + timedelta(hours=7)
 
-    recordsDataFilter= db.session.query(Records).filter(Records.device_id == deviceId).filter( Records.timestamp.between( date_time_Start, date_time_End)).all()
+    recordsDataFilter= db.session.query(Records).filter(Records.device_id == deviceId).filter( Records.timestamp.between( date_time_Start, date_time_End)).order_by(Records.timestamp.asc()).all()
     
     for i in recordsDataFilter:
         records_test_data = {}
@@ -138,7 +138,7 @@ def records_latest():
 #This function gets devices information list
 @app.route("/devices", methods=['GET'])
 def device_info():
-    deviceInfoData = Device_Info.query.all()
+    deviceInfoData = Device_Info.query.order_by(Device_Info.device_id.asc()).all()
     output = []
 
     for i in deviceInfoData:
