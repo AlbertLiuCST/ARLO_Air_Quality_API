@@ -1,25 +1,24 @@
 from flask import Flask, jsonify, make_response,request, session
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Date, cast
+from sqlalchemy import Date, cast, DateTime, Time, extract
 from flask_cors import CORS, cross_origin
 import jwt
 import time
 import datetime
-from datetime import date
+from pytz import timezone
+from datetime import date, timedelta
 from functools import wraps
 from flask_session import Session
-
+import pytz
+#
 SESSION_TYPE = 'filesystem'
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'thisissecret'
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost/postgres'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
-
-# cors = CORS(app, resources={r"/readings": {"origins": "http://localhost:3000"}})
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
@@ -36,18 +35,16 @@ SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
 app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
 ### end swagger specific ###
 
-#Create Device_test object
-class Device_test(db.Model):
-    __tablename__ = 'device_test'
+#Create Device object 
+class Device_Info(db.Model):
+    __tablename__ = 'device_info'
     device_id = db.Column(db.Integer, primary_key=True)
     device_name = db.Column(db.String(100))
     location_name = db.Column(db.String(100))
-    device_lng = db.Column(db.Float)
-    device_lat = db.Column(db.Float)
 
-# Create records_test object
-class Records_test(db.Model):
-    __tablename__ = 'records_test'
+# Create Records object 
+class Records(db.Model):
+    __tablename__ = 'records'
     record_id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.String(100))
     temp = db.Column(db.Float)
@@ -57,28 +54,29 @@ class Records_test(db.Model):
     timestamp = db.Column(db.DateTime(timezone=True))
 
 
-##setup flask jwt token
+##This function setup flask jwt token
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.args.get('token') #http://127.0.0.1:5000/route?token=<token key>
-        if not token:
+        if not token:   
             return jsonify({'message' : 'Token is missing!'}), 401
         try:
-            data = jwt.decode(token,app.config['SECRET_KEY'])
+            data = jwt.decode(token,app.config['SECRET_KEY']) #decode the jwt using secret key
         except:
             return jsonify({'message' : 'Token is invalid!'}), 401
         return f(*args, **kwargs)
     return decorated
 
-#Post request by passing json payload and return specified data 
+# This function executes when /reading endpoint is called.
+# This Post request by passing json payload and return specified data in json format.
 @app.route("/readings", methods=['POST'])
-
 @token_required
 @cross_origin()
 def records_test():
+
     data = request.get_json()
-    recordsTestData = Records_test.query.all()
+
     output = []
     start = data['Start_date']
     end = data['End_date']
@@ -88,17 +86,12 @@ def records_test():
     boolTVOC = data['TVOC']
     boolCO2 = data['CO2']
 
-    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d')
-    timeStart = time.mktime(date_time_Start.timetuple())
 
-    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d')
-    timeEnd = time.mktime(date_time_End.timetuple())
+    date_time_Start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=7)
+    date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M') + timedelta(hours=7)
 
-    dateStart = date_time_Start.date()
-    dateEnd = date_time_End.date()
-
-    recordsDataFilter = db.session.query(Records_test).filter(Records_test.device_id == deviceId).filter(cast(Records_test.timestamp,Date).between(dateStart, dateEnd)).all()
-
+    recordsDataFilter= db.session.query(Records).filter(Records.device_id == deviceId).filter( Records.timestamp.between( date_time_Start, date_time_End)).order_by(Records.timestamp.asc()).all()
+    
     for i in recordsDataFilter:
         records_test_data = {}
         records_test_data['record_id'] = i.record_id
@@ -111,35 +104,51 @@ def records_test():
             records_test_data['co2'] = i.co2
         if boolTVOC :
             records_test_data['tvoc'] = i.tvoc
-        records_test_data['timestamp'] = i.timestamp
+
+        pacific_time_date = i.timestamp.astimezone(timezone('US/Pacific')) #convert to PDT timezone
+        convert_date_format =datetime.datetime.strftime(pacific_time_date, '%Y-%m-%d %H:%M %Z')
+        records_test_data['timestamp'] = convert_date_format
+
         output.append(records_test_data)
     return jsonify({'records_test_data' : output})
 
-#get devices information
+#This function gets the lastest recorded data for a specified device id
+@app.route("/readings/device", methods=['GET'])
+@token_required
+def records_latest():
+    output = []
+    deviceId = request.args.get('id')
+    recordsDataFilter = db.session.query(Records).filter(Records.device_id == deviceId).order_by(Records.record_id.desc()).first()
+ 
+    records_test_data = {}
+    records_test_data['record_id'] = recordsDataFilter.record_id
+    records_test_data['device_id'] = recordsDataFilter.device_id
+    records_test_data['temp'] = recordsDataFilter.temp
+    records_test_data['humidity'] = recordsDataFilter.humidity
+    records_test_data['co2'] = recordsDataFilter.co2
+    records_test_data['tvoc'] = recordsDataFilter.tvoc
+    pacific_time_date = recordsDataFilter.timestamp.astimezone(timezone('US/Pacific'))
+    convert_date_format =datetime.datetime.strftime(pacific_time_date, '%Y-%m-%d %H:%M %Z')
+    records_test_data['timestamp'] = convert_date_format
+    output.append(records_test_data)
+    return jsonify({'records_data' : output})
+
+#This function gets devices information list
 @app.route("/devices", methods=['GET'])
-def device_test():
-    deviceTestData = Device_test.query.all()
+def device_info():
+    deviceInfoData = Device_Info.query.order_by(Device_Info.device_id.asc()).all()
     output = []
 
-    for i in deviceTestData:
-        device_test_data = {}
-        device_test_data['device_id'] = i.device_id
-        device_test_data['device_name'] = i.device_name
-        device_test_data['location_name'] = i.location_name
-        device_test_data['device_lng'] = i.device_lng
-        device_test_data['device_lat'] = i.device_lat
-        output.append(device_test_data)
-    return jsonify({'device_test_data' : output})
+    for i in deviceInfoData:
+        device_info_data = {}
+        device_info_data['device_id'] = i.device_id
+        device_info_data['device_name'] = i.device_name
+        device_info_data['location_name'] = i.location_name
+        output.append(device_info_data)
+    return jsonify({'device_info_data' : output})
 
-@app.route('/unprotected')
-def unprotected():
-    return jsonify({'message' : 'Anyone can see this!'})
-
-@app.route('/protected')
-@token_required
-def protected():
-    return jsonify({'message' : 'This only for people with valid token!'})
-
+#This function validates the username and password. Once validated, a username and time to live is encoded using JWT.
+# JWT token will be jsonify and return back to client.
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
@@ -148,11 +157,11 @@ def login():
     if not auth or not auth['username'] or not auth['password'] :
         return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
    
-    if auth and auth['password'] == 'password':
-        token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=15)},app.config['SECRET_KEY'])
+    if auth and auth['password'] == 'bcitairquality' and auth['username'] == 'bcitarlo':
+        token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=120)},app.config['SECRET_KEY'])
         return jsonify({'token' : token.decode('UTF-8')})
 
     return make_response('Could not verify', 401)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0')
