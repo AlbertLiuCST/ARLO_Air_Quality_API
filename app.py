@@ -11,17 +11,14 @@ from datetime import date, timedelta
 from functools import wraps
 from flask_session import Session
 import pytz
-
+#
 SESSION_TYPE = 'filesystem'
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'thisissecret'
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost/postgres'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
-
-# cors = CORS(app, resources={r"/readings": {"origins": "http://localhost:3000"}})
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
@@ -38,7 +35,7 @@ SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
 app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
 ### end swagger specific ###
 
-#Create Device_test object
+#Create Device object 
 class Device_Info(db.Model):
     __tablename__ = 'device_info'
     device_id = db.Column(db.Integer, primary_key=True)
@@ -47,7 +44,7 @@ class Device_Info(db.Model):
     device_lng = db.Column(db.Float)
     device_lat = db.Column(db.Float)
 
-# Create records_test object
+# Create Records object 
 class Records(db.Model):
     __tablename__ = 'records'
     record_id = db.Column(db.Integer, primary_key=True)
@@ -59,21 +56,22 @@ class Records(db.Model):
     timestamp = db.Column(db.DateTime(timezone=True))
 
 
-##setup flask jwt token
+##This function setup flask jwt token
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.args.get('token') #http://127.0.0.1:5000/route?token=<token key>
-        if not token:
+        if not token:   
             return jsonify({'message' : 'Token is missing!'}), 401
         try:
-            data = jwt.decode(token,app.config['SECRET_KEY'])
+            data = jwt.decode(token,app.config['SECRET_KEY']) #decode the jwt using secret key
         except:
             return jsonify({'message' : 'Token is invalid!'}), 401
         return f(*args, **kwargs)
     return decorated
 
-#Post request by passing json payload and return specified data 
+# This function executes when /reading endpoint is called.
+# This Post request by passing json payload and return specified data in json format.
 @app.route("/readings", methods=['POST'])
 @token_required
 @cross_origin()
@@ -95,7 +93,7 @@ def records_test():
     date_time_End = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M') + timedelta(hours=7)
 
     recordsDataFilter= db.session.query(Records).filter(Records.device_id == deviceId).filter( Records.timestamp.between( date_time_Start, date_time_End)).all()
-
+    
     for i in recordsDataFilter:
         records_test_data = {}
         records_test_data['record_id'] = i.record_id
@@ -109,14 +107,14 @@ def records_test():
         if boolTVOC :
             records_test_data['tvoc'] = i.tvoc
 
-        pacific_time_date = i.timestamp.astimezone(timezone('US/Pacific'))
+        pacific_time_date = i.timestamp.astimezone(timezone('US/Pacific')) #convert to PDT timezone
         convert_date_format =datetime.datetime.strftime(pacific_time_date, '%Y-%m-%d %H:%M %Z')
         records_test_data['timestamp'] = convert_date_format
 
         output.append(records_test_data)
     return jsonify({'records_test_data' : output})
 
-#get the lastest recorded data for a specified device id
+#This function gets the lastest recorded data for a specified device id
 @app.route("/readings/device", methods=['GET'])
 @token_required
 def records_latest():
@@ -137,22 +135,24 @@ def records_latest():
     output.append(records_test_data)
     return jsonify({'records_data' : output})
 
-#get devices information
+#This function gets devices information list
 @app.route("/devices", methods=['GET'])
-def device_test():
-    deviceTestData = Device_Info.query.all()
+def device_info():
+    deviceInfoData = Device_Info.query.all()
     output = []
 
-    for i in deviceTestData:
-        device_test_data = {}
-        device_test_data['device_id'] = i.device_id
-        device_test_data['device_name'] = i.device_name
-        device_test_data['location_name'] = i.location_name
-        device_test_data['device_lng'] = i.device_lng
-        device_test_data['device_lat'] = i.device_lat
-        output.append(device_test_data)
-    return jsonify({'device_test_data' : output})
+    for i in deviceInfoData:
+        device_info_data = {}
+        device_info_data['device_id'] = i.device_id
+        device_info_data['device_name'] = i.device_name
+        device_info_data['location_name'] = i.location_name
+        device_info_data['device_lng'] = i.device_lng
+        device_info_data['device_lat'] = i.device_lat
+        output.append(device_info_data)
+    return jsonify({'device_info' : output})
 
+#This function validates the username and password. Once validated, a username and time to live is encoded using JWT.
+# JWT token will be jsonify and return back to client.
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
