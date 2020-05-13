@@ -120,7 +120,7 @@
                         "in": "query",
                         "name": "id",
                         "required": true,
-                        "description": "API Requests a token",
+                        "description": "API Requests a device_id",
                         "schema": {
                             "$ref": "#/components/schemas/token"
                         }
