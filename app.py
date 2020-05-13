@@ -149,7 +149,7 @@ def device_info():
         device_info_data['device_lng'] = i.device_lng
         device_info_data['device_lat'] = i.device_lat
         output.append(device_info_data)
-    return jsonify({'device_info' : output})
+    return jsonify({'device_info_data' : output})
 
 #This function validates the username and password. Once validated, a username and time to live is encoded using JWT.
 # JWT token will be jsonify and return back to client.
