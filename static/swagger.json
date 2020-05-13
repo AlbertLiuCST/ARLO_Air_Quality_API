@@ -33,7 +33,7 @@
                 "tags": [
                     "Post Reading"
                 ],
-                "summary": "Create a new request system",
+                "summary": "Create a new request system that returns list of air quality data at a specified range of time",
                 "description": "",
                 "operationId": "createUsersWithListInput",
                 "produces": [
@@ -81,7 +81,7 @@
                 "tags": [
                     "Devices Request"
                 ],
-                "summary": "Get devices request",
+                "summary": "Get list of registered devices in the system",
 
                 "responses": {
                     "200": {
@@ -105,7 +105,7 @@
                 "tags": [
                     "Devices Request"
                 ],
-                "summary": "Get devices request",
+                "summary": "Get devices latest record air quality data",
                 "parameters": [
                     {
                         "in": "query",
