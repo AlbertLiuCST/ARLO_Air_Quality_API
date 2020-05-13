@@ -168,4 +168,4 @@ def login():
     return make_response('Could not verify', 401)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0')
