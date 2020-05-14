@@ -169,7 +169,6 @@ def token_required(f):
 
 #Post request by passing json payload and return specified data 
 @app.route("/readings", methods=['POST'])
-
 @token_required
 @cross_origin()
 def records_test():
@@ -213,6 +212,7 @@ def records_test():
 
 #get devices information
 @app.route("/devices", methods=['GET'])
+@token_required
 def device_test():
     deviceTestData = Device_test.query.all()
     output = []
@@ -226,15 +226,6 @@ def device_test():
         device_test_data['device_lat'] = i.device_lat
         output.append(device_test_data)
     return jsonify({'device_test_data' : output})
-
-@app.route('/unprotected')
-def unprotected():
-    return jsonify({'message' : 'Anyone can see this!'})
-
-@app.route('/protected')
-@token_required
-def protected():
-    return jsonify({'message' : 'This only for people with valid token!'})
 
 @app.route('/login', methods=['POST'])
 @cross_origin()
