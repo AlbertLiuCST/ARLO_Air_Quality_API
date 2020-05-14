@@ -1,183 +1,260 @@
 {
-  "openapi": "3.0.0",
-  "info": {
-    "description": "",
-    "version": "1.0.0",
-    "title": "ARLO-Air-Quality-API",
-    "contact": {
-      "email": ""
-    },
-    "license": {
-      "name": "MIT",
-      "url": "https://opensource.org/licenses/MIT"
-    }
-  },
-  "servers": [
-    {
-      "url": "/"
-    }
-  ],
-  "tags": [
-    {
-      "name": "ARLO-Air-Quality-API",
-      "description": "RESTfulAPI for requesting and return air quality data from IOT devices"
-    }
-  ],
-  "paths": {
-    "/readings": {
-      "post": {
-        "tags": [
-          "Post Reading"
-        ],
-        "summary": "Create a new request system",
-        "requestBody": {
-          "description": "Request Post Object",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReadingsRequest"
-              }
-            }
-          }
+    "openapi": "3.0.0",
+    "info": {
+        "description": "",
+        "version": "1.0.0",
+        "title": "ARLO-Air-Quality-API",
+        "contact": {
+            "email": ""
         },
-        "produces": [
-          "application/json"
-        ],
-        "responses": {
-          "201": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/components/schemas/ReadingsRequest"
-            }
-          },
-          "400": {
-            "description": "Failed. Bad post data."
-          }
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
         }
-      }
     },
-    "/devices": {
-      "get": {
-        "tags": [
-          "Devices Request"
-        ],
-        "summary": "Get devices request",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/components/schemas/devices"
+    "schemes": ["https"],
+    "servers": [{
+        "url": "/"
+    }],
+    "tags": [{
+        "name": "ARLO-Air-Quality-API",
+        "description": "RESTfulAPI for requesting and return air quality data from IOT devices"
+    }],
+    "paths": {
+        "/readings": {
+            "parameters": [{
+                "name": "token",
+                "in": "query",
+                "required": true,
+                "description": "ID of the cat that we want to match",
+                "type": "string"
+            }],
+            "post": {
+                "tags": [
+                    "Post Reading"
+                ],
+                "summary": "Create a new request system that returns list of air quality data at a specified range of time",
+                "description": "",
+                "operationId": "createUsersWithListInput",
+                "produces": [
+                    "application/json"
+                ],
+                "requestBody": {
+                    "description": "Readings Request Post Object",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReadingsRequest"
+                            }
+                        }
+                    }
+                },
+                "parameters": [{
+                    "in": "query",
+                    "name": "token",
+                    "required": true,
+                    "description": "API Requests a token",
+                    "schema": {
+                        "$ref": "#/components/schemas/token"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/ReadingsRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized. Bad token data."
+                    },
+                    "400": {
+                        "description": "Failed. Bad post data."
+                    }
+                }
             }
-          },
-          "400": {
-            "description": "Failed. Bad request."
-          },
-          "404": {
-            "description": "Failed. The device is not found."
-          }
-        }
-      }
-    },
-    "/login": {
-      "post": {
-        "tags": [
-          "User Authentication"
-        ],
-        "summary": "Authentication returns a token to be used for API calls",
-        "requestBody": {
-          "description": "Request Post Object",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/loginSuccess"
-              }
-            }
-          }
         },
-        "produces": [
-          "application/json"
-        ],
-        "responses": {
-          "201": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/components/schemas/loginSuccess"
+        "/devices": {
+
+            "get": {
+                "tags": [
+                    "Devices Request"
+                ],
+                "summary": "Get list of registered devices in the system",
+
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/devices"
+                        }
+                    },
+                    "400": {
+                        "description": "Failed. Bad request."
+                    },
+                    "404": {
+                        "description": "Failed. The device is not found."
+                    }
+                }
             }
-          },
-          "400": {
-            "description": "Failed. Bad post data."
-          }
+        },
+        "/readings/device": {
+
+            "get": {
+                "tags": [
+                    "Devices Request"
+                ],
+                "summary": "Get devices latest record air quality data",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "token",
+                        "required": true,
+                        "description": "API Requests a token",
+                        "schema": {
+                            "$ref": "#/components/schemas/token"
+                        }
+                    },
+                    {                   
+                        "in": "query",
+                        "name": "id",
+                        "required": true,
+                        "description": "API Requests a device_id",
+                        "schema": {
+                            "$ref": "#/components/schemas/token"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/devices"
+                        }
+                    },
+                    "400": {
+                        "description": "Failed. Bad request."
+                    },
+                    "404": {
+                        "description": "Failed. The device is not found."
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "User Authentication"
+                ],
+                "summary": "Authentication returns a token to be used for API calls",
+                "requestBody": {
+                    "description": "Request Post Object",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/loginSuccess"
+                            }
+                        }
+                    }
+                },
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/loginSuccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Failed. Bad post data."
+                    }
+                }
+            }
         }
-      }
+    },
+    "components": {
+        "schemas": {
+            "devices": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "location": {
+                        "type": "string"
+                    },
+                    "device_lng": {
+                        "type": "float"
+
+                    },
+                    "device_lat": {
+                        "type": "float"
+
+                    }
+                }
+            },
+            "ReadingsRequest": {
+                "type": "object",
+                "properties": {
+                    "device_id": {
+                        "type": "string",
+                        "minimum": "1"
+                    },
+                    "Temperature": {
+                        "type": "boolean"
+                    },
+                    "Humidity": {
+                        "type": "boolean"
+                    },
+                    "TVOC": {
+                        "type": "boolean"
+                    },
+                    "CO2": {
+                        "type": "boolean"
+                    },
+                    "Start_date": {
+                        "type": "string",
+                        "pattern": "2020-05-04 13:33"
+                    },
+                    "End_date": {
+                        "type": "string",
+                        "pattern": "2020-05-08 15:28"
+                    }
+                }
+            },
+            "loginSuccess": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+
+                    }
+                }
+            },
+            "token": {
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    }
+                }
+            },
+            "id": {
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
     }
-  },
-  "components": {
-    "schemas": {
-      "devices": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "id": {
-            "type": "integer"
-          },
-          "location": {
-            "type": "string"
-          },
-          "device_lng": {
-            "type": "float"
-
-          },
-          "device_lat": {
-            "type": "float"
-
-          }
-        }
-      },
-      "ReadingsRequest": {
-        "type": "object",
-        "properties": {
-          "device_id": {
-            "type": "integer",
-            "minimum": "1"
-          },
-          "Temperature": {
-            "type": "boolean"
-          },
-          "Humidity": {
-            "type": "boolean"
-          },
-          "TVOC": {
-            "type": "boolean"
-          },
-          "CO2": {
-            "type": "boolean"
-          },
-          "Start_date": {
-            "type": "string",
-            "format": "date"
-          },
-          "End_date": {
-            "type": "string",
-            "format": "date"
-          }
-        }
-      },
-      "loginSuccess": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string"
-
-          }
-        }
-      }
-    }
-  }
 }
