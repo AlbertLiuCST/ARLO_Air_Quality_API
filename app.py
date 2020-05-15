@@ -53,6 +53,7 @@ class Device_Info(db.Model):
     device_id = db.Column(db.Integer, primary_key=True)
     device_name = db.Column(db.String(100))
     location_name = db.Column(db.String(100))
+    active = db.Column(db.Boolean)
 
 # Create Records object 
 class Records(db.Model):
@@ -254,6 +255,7 @@ def device_info():
         device_info_data['device_id'] = i.device_id
         device_info_data['device_name'] = i.device_name
         device_info_data['location_name'] = i.location_name
+        device_info_data['active'] = i.active
         output.append(device_info_data)
     return jsonify({'device_info_data' : output})
 

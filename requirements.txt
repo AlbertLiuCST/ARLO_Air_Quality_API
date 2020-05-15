@@ -8,6 +8,7 @@ click==7.1.1
 colorama==0.4.3
 cryptography==2.9.2
 distlib==0.3.0
+ecdsa==0.15
 filelock==3.0.12
 Flask==1.0.2
 Flask-Cors==3.0.7
@@ -27,12 +28,15 @@ MarkupSafe==1.1.1
 mccabe==0.6.1
 nose==1.3.7
 psycopg2==2.8.5
+pyasn1==0.4.8
 pycparser==2.20
 PyJWT==1.7.1
 pylint==2.4.4
 python-dateutil==2.4.2
+python-jose==3.1.0
 pytz==2015.7
 requests==2.21.0
+rsa==4.0
 six==1.14.0
 SQLAlchemy==1.3.16
 urllib3==1.24.3
