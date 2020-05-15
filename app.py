@@ -3,6 +3,8 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Date, cast, DateTime, Time, extract
 from flask_cors import CORS, cross_origin
+
+import json
 import jwt
 import time
 import datetime
@@ -10,15 +12,25 @@ from pytz import timezone
 from datetime import date, timedelta
 from functools import wraps
 from flask_session import Session
+from six.moves.urllib.request import urlopen
+from jose import jwt
 import pytz
-#
+import requests
+
 SESSION_TYPE = 'filesystem'
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'thisissecret'
+app.config['CLIENT_ID'] = 'xMyRktEjNm1MJz2W6KO2bTeBImCjZRjg'
+app.config['CLIENT_SECRET'] = '2rWdiq9DDhIjfz_zeswEvgTmztGxPos6T-TkMf-QhpExttiX6LqkUd5y68qJkdwD'
+app.config['TOKEN_ENDPOINT'] = 'https://arlo-aq-api.auth0.com/oauth/token'
+app.config['AUDIENCE'] = 'https://ARLO-AQ/api'
+app.config['SECRET_KEY'] = '2rWdiq9DDhIjfz_zeswEvgTmztGxPos6T-TkMf-QhpExttiX6LqkUd5y68qJkdwD'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Zh6Q6C97@database-issp-air-quality-instance.cmamvcvbojfv.us-west-2.rds.amazonaws.com/airQualityApiDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
+
+ALGORITHMS = ["RS256"]
+# cors = CORS(app, resources={r"/readings": {"origins": "http://localhost:3000"}})
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
@@ -53,26 +65,121 @@ class Records(db.Model):
     tvoc = db.Column(db.Float)
     timestamp = db.Column(db.DateTime(timezone=True))
 
+class User_Info(db.Model):
+    __tablename__ = 'user'
+    user_id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255))
+    password = db.Column(db.String(255))
+    first_name = db.Column(db.String(255))
+    last_name = db.Column(db.String(255))
+    access_token = db.Column(db.String(1000))
+    token_expires = db.Column(db.String(255))
 
-##This function setup flask jwt token
+class AuthError(Exception):
+    def __init__(self, error, status_code):
+        self.error = error
+        self.status_code = status_code
+
+
+@app.errorhandler(AuthError)
+def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+
+def get_token_auth_header():
+    """Obtains the access token from the Authorization Header
+    """
+    auth = request.headers.get("Authorization", None)
+    if not auth:
+        raise AuthError({"code": "authorization_header_missing",
+                        "description":
+                            "Authorization header is expected"}, 401)
+
+    parts = auth.split()
+
+    if parts[0].lower() != "bearer":
+        raise AuthError({"code": "invalid_header",
+                        "description":
+                            "Authorization header must start with"
+                            " Bearer"}, 401)
+    elif len(parts) == 1:
+        raise AuthError({"code": "invalid_header",
+                        "description": "Token not found"}, 401)
+    elif len(parts) > 2:
+        raise AuthError({"code": "invalid_header",
+                        "description":
+                            "Authorization header must be"
+                            " Bearer token"}, 401)
+
+    token = parts[1]
+    return token
+
+##setup flask jwt token
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = request.args.get('token') #http://127.0.0.1:5000/route?token=<token key>
-        if not token:   
-            return jsonify({'message' : 'Token is missing!'}), 401
+        token = get_token_auth_header()
+
+        
+        jsonurl = urlopen("https://arlo-aq-api.auth0.com/.well-known/jwks.json")
+        jwks = json.loads(jsonurl.read())
         try:
-            data = jwt.decode(token,app.config['SECRET_KEY']) #decode the jwt using secret key
-        except:
-            return jsonify({'message' : 'Token is invalid!'}), 401
-        return f(*args, **kwargs)
+            unverified_header = jwt.get_unverified_header(token)
+        except jwt.JWTError:
+            raise AuthError({"code": "invalid_header",
+                            "description":
+                                "Invalid header. "
+                                "Use an RS256 signed JWT Access Token"}, 401)
+        if unverified_header["alg"] == "HS256":
+            raise AuthError({"code": "invalid_header",
+                            "description":
+                                "Invalid header. "
+                                "Use an RS256 signed JWT Access Token"}, 401)
+        rsa_key = {}
+        for key in jwks["keys"]:
+            if key["kid"] == unverified_header["kid"]:
+                rsa_key = {
+                    "kty": key["kty"],
+                    "kid": key["kid"],
+                    "use": key["use"],
+                    "n": key["n"],
+                    "e": key["e"]
+                }
+        if rsa_key:
+            try:
+                payload = jwt.decode(
+                    token,
+                    rsa_key,
+                    algorithms=ALGORITHMS,
+                    audience='https://ARLO-AQ/api',
+                    issuer="https://arlo-aq-api.auth0.com/"
+                )
+            except jwt.ExpiredSignatureError:
+                raise AuthError({"code": "token_expired",
+                                "description": "token is expired"}, 401)
+            except jwt.JWTClaimsError:
+                raise AuthError({"code": "invalid_claims",
+                                "description":
+                                    "incorrect claims,"
+                                    " please check the audience and issuer"}, 401)
+            except Exception:
+                raise AuthError({"code": "invalid_header",
+                                "description":
+                                    "Unable to parse authentication"
+                                    " token."}, 401)
+
+            
+            return f(*args, **kwargs)
+        raise AuthError({"code": "invalid_header",
+                        "description": "Unable to find appropriate key"}, 401)
     return decorated
 
 # This function executes when /reading endpoint is called.
 # This Post request by passing json payload and return specified data in json format.
 @app.route("/readings", methods=['POST'])
 @token_required
-@cross_origin()
 def records_test():
 
     data = request.get_json()
@@ -113,11 +220,13 @@ def records_test():
     return jsonify({'records_test_data' : output})
 
 #This function gets the lastest recorded data for a specified device id
-@app.route("/readings/device", methods=['GET'])
+@app.route("/readings/device", methods=['POST'])
 @token_required
 def records_latest():
+    data = request.get_json()
+
     output = []
-    deviceId = request.args.get('id')
+    deviceId = data['id']
     recordsDataFilter = db.session.query(Records).filter(Records.device_id == deviceId).order_by(Records.record_id.desc()).first()
  
     records_test_data = {}
@@ -134,7 +243,8 @@ def records_latest():
     return jsonify({'records_data' : output})
 
 #This function gets devices information list
-@app.route("/devices", methods=['GET'])
+@app.route("/devices", methods=['POST'])
+@token_required
 def device_info():
     deviceInfoData = Device_Info.query.order_by(Device_Info.device_id.asc()).all()
     output = []
@@ -156,12 +266,53 @@ def login():
 
     if not auth or not auth['username'] or not auth['password'] :
         return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
-   
-    if auth and auth['password'] == 'bcitairquality' and auth['username'] == 'bcitarlo':
-        token = jwt.encode({'user': auth['username'], 'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=120)},app.config['SECRET_KEY'])
-        return jsonify({'token' : token.decode('UTF-8')})
+    
+    user_query = db.session.query(User_Info).filter(User_Info.email == auth['username']).filter(User_Info.password == auth['password']).first()
+
+    if user_query is not None:
+        return make_response('User is valid', 200)
 
     return make_response('Could not verify', 401)
+
+@app.route('/signup',methods=['POST'])
+@cross_origin()
+def signup():
+    user_signup_info = request.get_json()
+    
+    user_query = db.session.query(User_Info).filter(User_Info.email == user_signup_info['email']).first()
+
+    if user_query is not None:
+        return make_response('User Already Exists', 409)
+
+    #Temporary Hide the id and secret
+    payload = {
+        'grant_type' : 'client_credentials',
+        'client_id' :  'i6Gsz4wzT4YKOzSHFdfQpaOFIPpxn4Qm',
+        'client_secret' : 'ivaOrWXeEe4Wg-MLSYy_-Axo5g9Kj6ykUQcVlQ1Gfqkxmug4ysjJSUl8iAD4gY_s',
+        'audience' : 'https://ARLO-AQ/api'
+    }
+    res = requests.post('https://arlo-aq-api.auth0.com/oauth/token', data = payload)
+    token = res.json()
+    date = datetime.datetime.now() + datetime.timedelta(30)
+    timestampStr = date.strftime("%d-%b-%Y")
+
+    user = User_Info()
+    user.email = user_signup_info['email']
+    user.first_name = user_signup_info['first_name']
+    user.last_name = user_signup_info['last_name']
+    user.password = user_signup_info['password']
+    user.access_token = token['access_token']
+    user.token_expires = timestampStr
+    db.session.add(user)
+    db.session.commit()
+    
+    return make_response('User Created',200)
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
