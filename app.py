@@ -72,7 +72,7 @@ class User_Info(db.Model):
     password = db.Column(db.String(255))
     first_name = db.Column(db.String(255))
     last_name = db.Column(db.String(255))
-    access_token = db.Column(db.String(255))
+    access_token = db.Column(db.String(1000))
     token_expires = db.Column(db.String(255))
 
 class AuthError(Exception):
