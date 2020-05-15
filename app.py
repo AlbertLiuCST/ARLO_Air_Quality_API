@@ -73,6 +73,7 @@ class User_Info(db.Model):
     password = db.Column(db.String(255))
     first_name = db.Column(db.String(255))
     last_name = db.Column(db.String(255))
+    student_number = db.Column(db.String(255))
     access_token = db.Column(db.String(1000))
     token_expires = db.Column(db.String(255))
 
@@ -303,6 +304,7 @@ def signup():
     user.first_name = user_signup_info['first_name']
     user.last_name = user_signup_info['last_name']
     user.password = user_signup_info['password']
+    user.student_number = user_signup_info['student_number']
     user.access_token = token['access_token']
     user.token_expires = timestampStr
     db.session.add(user)
