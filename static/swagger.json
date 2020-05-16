@@ -7,7 +7,7 @@
     },
     "servers": [
       {
-        "url": "/"
+        "url": "http://localhost:5000"
       }
     ],
     "paths": {
@@ -219,13 +219,49 @@
             }
           }
         }
+      },
+      "/profile": {
+        "post": {
+          "description": "User sign up API calls",
+          "tags": [
+            "Users"
+          ],
+          "requestBody": {
+            "description": "Request Post Object",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/requestProfile"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/profile"
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "unexpected error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "security": [
-      {
-        "bearerAuth": []
-      }
-    ],
     "components": {
       "securitySchemes": {
         "bearerAuth": {
@@ -299,7 +335,7 @@
             "password": {
               "type": "string"
             },
-            "student_number": {
+            "bcit_number": {
               "type": "string"
             }
           }
@@ -319,6 +355,31 @@
             },
             "active": {
               "type": "boolean"
+            }
+          }
+        },
+        "requestProfile": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "profile": {
+          "type": "object",
+          "properties": {
+            "firstname": {
+              "type": "string"
+            },
+            "lastname": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "token": {
+              "type": "string"
             }
           }
         },
