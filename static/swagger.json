@@ -1,260 +1,343 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "description": "",
-        "version": "1.0.0",
-        "title": "ARLO-Air-Quality-API",
-        "contact": {
-            "email": ""
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        }
+      "version": "1.0.0",
+      "title": "ARLO-Air-Quality-API",
+      "description": "A sample API demostrates ARLO-Air-Quality-API"
     },
-    "schemes": ["https"],
-    "servers": [{
+    "servers": [
+      {
         "url": "/"
-    }],
-    "tags": [{
-        "name": "ARLO-Air-Quality-API",
-        "description": "RESTfulAPI for requesting and return air quality data from IOT devices"
-    }],
+      }
+    ],
     "paths": {
-        "/readings": {
-            "parameters": [{
-                "name": "token",
-                "in": "query",
-                "required": true,
-                "description": "ID of the cat that we want to match",
-                "type": "string"
-            }],
-            "post": {
-                "tags": [
-                    "Post Reading"
-                ],
-                "summary": "Create a new request system that returns list of air quality data at a specified range of time",
-                "description": "",
-                "operationId": "createUsersWithListInput",
-                "produces": [
-                    "application/json"
-                ],
-                "requestBody": {
-                    "description": "Readings Request Post Object",
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ReadingsRequest"
-                            }
-                        }
-                    }
-                },
-                "parameters": [{
-                    "in": "query",
-                    "name": "token",
-                    "required": true,
-                    "description": "API Requests a token",
-                    "schema": {
-                        "$ref": "#/components/schemas/token"
-                    }
-                }],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/components/schemas/ReadingsRequest"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized. Bad token data."
-                    },
-                    "400": {
-                        "description": "Failed. Bad post data."
-                    }
-                }
+      "/readings": {
+        "post": {
+          "security": [
+            {
+              "bearerAuth": []
             }
-        },
-        "/devices": {
-
-            "get": {
-                "tags": [
-                    "Devices Request"
-                ],
-                "summary": "Get list of registered devices in the system",
-
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/components/schemas/devices"
-                        }
-                    },
-                    "400": {
-                        "description": "Failed. Bad request."
-                    },
-                    "404": {
-                        "description": "Failed. The device is not found."
-                    }
+          ],
+          "description": "Create a new request system that returns list of air quality data at a specified range of time",
+          "tags": [
+            "Reading Request"
+          ],
+          "requestBody": {
+            "description": "Reading request body",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/readingsrequest"
                 }
+              }
             }
-        },
-        "/readings/device": {
-
-            "get": {
-                "tags": [
-                    "Devices Request"
-                ],
-                "summary": "Get devices latest record air quality data",
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "token",
-                        "required": true,
-                        "description": "API Requests a token",
-                        "schema": {
-                            "$ref": "#/components/schemas/token"
-                        }
-                    },
-                    {                   
-                        "in": "query",
-                        "name": "id",
-                        "required": true,
-                        "description": "API Requests a device_id",
-                        "schema": {
-                            "$ref": "#/components/schemas/token"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/components/schemas/devices"
-                        }
-                    },
-                    "400": {
-                        "description": "Failed. Bad request."
-                    },
-                    "404": {
-                        "description": "Failed. The device is not found."
-                    }
+          },
+          "responses": {
+            "200": {
+              "description": "pet response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/readingsrequest"
+                  }
                 }
-            }
-        },
-        "/login": {
-            "post": {
-                "tags": [
-                    "User Authentication"
-                ],
-                "summary": "Authentication returns a token to be used for API calls",
-                "requestBody": {
-                    "description": "Request Post Object",
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/loginSuccess"
-                            }
-                        }
-                    }
-                },
-                "produces": [
-                    "application/json"
-                ],
-                "responses": {
-                    "201": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/components/schemas/loginSuccess"
-                        }
-                    },
-                    "400": {
-                        "description": "Failed. Bad post data."
-                    }
+              }
+            },
+            "default": {
+              "description": "unexpected error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
                 }
+              }
             }
+          }
         }
+      },
+      "/devices": {
+        "post": {
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "description": "Get list of registered devices in the system",
+          "tags": [
+            "Devices Request"
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/devices_info"
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "unexpected error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/readings/device": {
+        "post": {
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "description": "Get devices latest record air quality data",
+          "tags": [
+            "Devices Request"
+          ],
+          "requestBody": {
+            "description": "Request Post Object",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/readingsdevice"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/devices_info"
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "unexpected error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/login": {
+        "post": {
+          "description": "User Authentication for API calls",
+          "tags": [
+            "Users"
+          ],
+          "requestBody": {
+            "description": "Request Post Object",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/loginParameters"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/loginParameters"
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "unexpected error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/signup": {
+        "post": {
+          "description": "User sign up API calls",
+          "tags": [
+            "Users"
+          ],
+          "requestBody": {
+            "description": "Request Post Object",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/signupParameters"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/signupParameters"
+                  }
+                }
+              }
+            },
+            "default": {
+              "description": "unexpected error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ],
     "components": {
-        "schemas": {
-            "devices": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "location": {
-                        "type": "string"
-                    },
-                    "device_lng": {
-                        "type": "float"
-
-                    },
-                    "device_lat": {
-                        "type": "float"
-
-                    }
-                }
-            },
-            "ReadingsRequest": {
-                "type": "object",
-                "properties": {
-                    "device_id": {
-                        "type": "string",
-                        "minimum": "1"
-                    },
-                    "Temperature": {
-                        "type": "boolean"
-                    },
-                    "Humidity": {
-                        "type": "boolean"
-                    },
-                    "TVOC": {
-                        "type": "boolean"
-                    },
-                    "CO2": {
-                        "type": "boolean"
-                    },
-                    "Start_date": {
-                        "type": "string",
-                        "pattern": "2020-05-04 13:33"
-                    },
-                    "End_date": {
-                        "type": "string",
-                        "pattern": "2020-05-08 15:28"
-                    }
-                }
-            },
-            "loginSuccess": {
-                "type": "object",
-                "properties": {
-                    "username": {
-                        "type": "string"
-                    },
-                    "password": {
-                        "type": "string"
-
-                    }
-                }
-            },
-            "token": {
-                "properties": {
-                    "token": {
-                        "type": "string"
-                    }
-                }
-            },
-            "id": {
-                "properties": {
-                    "token": {
-                        "type": "string"
-                    }
-                }
-            }
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
         }
+      },
+      "schemas": {
+        "readingsdevice": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minimum": 1
+            }
+          }
+        },
+        "readingsrequest": {
+          "type": "object",
+          "properties": {
+            "device_id": {
+              "type": "string",
+              "minimum": 1
+            },
+            "Temperature": {
+              "type": "boolean"
+            },
+            "Humidity": {
+              "type": "boolean"
+            },
+            "TVOC": {
+              "type": "boolean"
+            },
+            "CO2": {
+              "type": "boolean"
+            },
+            "Start_date": {
+              "type": "string",
+              "pattern": "2020-05-04 13:33"
+            },
+            "End_date": {
+              "type": "string",
+              "pattern": "2020-05-04 13:33"
+            }
+          }
+        },
+        "loginParameters": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          }
+        },
+        "signupParameters": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "student_number": {
+              "type": "string"
+            }
+          }
+        },
+        "devices_info": {
+          "type": "object",
+          "properties": {
+            "device_id": {
+              "type": "string",
+              "minimum": 1
+            },
+            "device_name": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "active": {
+              "type": "boolean"
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "message": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
-}
+  }
