@@ -260,6 +260,49 @@ def device_info():
         output.append(device_info_data)
     return jsonify({'device_info_data' : output})
 
+@app.route('/token', methods=['POST'])
+def token():
+    auth = request.get_json()
+
+    if not auth or not auth['username'] or not auth['password'] :
+        return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
+    
+    user_query = db.session.query(User_Info).filter(User_Info.email == auth['username']).filter(User_Info.password == auth['password']).first()
+
+    if user_query is None:
+        return make_response('User not found', 404)
+    
+    token_expiry = datetime.datetime.strptime(user_query.token_expires,"%d-%b-%Y")
+    current_date = datetime.datetime.now()
+
+    expired = token_expiry < current_date
+
+    if not expired:
+        return jsonify({"access_token" : user_query.access_token})
+    else:
+        return token_refresh(auth['username'])
+
+def token_refresh(username):
+    user_query = db.session.query(User_Info).filter(User_Info.email == username).first()
+
+    payload = {
+        'grant_type' : 'client_credentials',
+        'client_id' :  'i6Gsz4wzT4YKOzSHFdfQpaOFIPpxn4Qm',
+        'client_secret' : 'ivaOrWXeEe4Wg-MLSYy_-Axo5g9Kj6ykUQcVlQ1Gfqkxmug4ysjJSUl8iAD4gY_s',
+        'audience' : 'https://ARLO-AQ/api'
+    }
+    res = requests.post('https://arlo-aq-api.auth0.com/oauth/token', data = payload)
+    token = res.json()
+    date = datetime.datetime.now() + datetime.timedelta(30)
+    timestampStr = date.strftime("%d-%b-%Y")
+
+    user_query.access_token = token['access_token']
+    user_query.token_expires = timestampStr
+    db.session.commit()
+
+    return jsonify({"access_token": token['access_token']})
+
+
 #This function validates the username and password. Once validated, a username and time to live is encoded using JWT.
 # JWT token will be jsonify and return back to client.
 @app.route('/login', methods=['POST'])
@@ -274,7 +317,7 @@ def login():
 
     if user_query is not None:
         return make_response('User is valid', 200)
-
+    
     return make_response('Could not verify', 401)
 
 @app.route('/signup',methods=['POST'])
@@ -311,6 +354,25 @@ def signup():
     db.session.commit()
     
     return make_response('User Created',200)
+
+
+@app.route('/profile',methods=['POST'])
+def profile():
+    user_req = request.get_json()
+    
+    user_query = db.session.query(User_Info).filter(User_Info.email == user_req['username']).first()
+
+    if user_query is None:
+        return make_response('Unauthorized',401)
+    
+    return jsonify({
+        "firstname" : user_query.first_name, 
+        "lastname"  : user_query.last_name,
+        "email"     : user_query.email,
+        "token"     : user_query.access_token})
+    
+
+
 
 
 
