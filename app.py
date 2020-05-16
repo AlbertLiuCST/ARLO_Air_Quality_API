@@ -319,7 +319,8 @@ def login():
         return make_response('User is valid', 200)
     
     return make_response('Could not verify', 401)
-
+    
+#sign up new user to the system and generate new token
 @app.route('/signup',methods=['POST'])
 @cross_origin()
 def signup():
@@ -355,7 +356,7 @@ def signup():
     
     return make_response('User Created',200)
 
-
+#get the user profile details
 @app.route('/profile',methods=['POST'])
 def profile():
     user_req = request.get_json()
@@ -370,14 +371,6 @@ def profile():
         "lastname"  : user_query.last_name,
         "email"     : user_query.email,
         "token"     : user_query.access_token})
-    
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
