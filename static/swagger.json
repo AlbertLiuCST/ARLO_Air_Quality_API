@@ -138,9 +138,9 @@
           }
         }
       },
-      "/login": {
+      "/token": {
         "post": {
-          "description": "User Authentication for API calls",
+          "description": "Token Endpoint. Validates a registered user and returns a token to be used for API calls",
           "tags": [
             "Users"
           ],
@@ -150,7 +150,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/loginParameters"
+                  "$ref": "#/components/schemas/tokenBodyParameters"
                 }
               }
             }
@@ -161,89 +161,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/loginParameters"
-                  }
-                }
-              }
-            },
-            "default": {
-              "description": "unexpected error",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/signup": {
-        "post": {
-          "description": "User sign up API calls",
-          "tags": [
-            "Users"
-          ],
-          "requestBody": {
-            "description": "Request Post Object",
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/signupParameters"
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/signupParameters"
-                  }
-                }
-              }
-            },
-            "default": {
-              "description": "unexpected error",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/profile": {
-        "post": {
-          "description": "User sign up API calls",
-          "tags": [
-            "Users"
-          ],
-          "requestBody": {
-            "description": "Request Post Object",
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/requestProfile"
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/profile"
+                    "$ref": "#/components/schemas/tokenParameters"
                   }
                 }
               }
@@ -309,33 +227,21 @@
             }
           }
         },
-        "loginParameters": {
+        "tokenParameters": {
+          "type": "object",
+          "properties": {
+            "access_token": {
+              "type": "string"
+            }
+          }
+        },
+        "tokenBodyParameters": {
           "type": "object",
           "properties": {
             "username": {
               "type": "string"
             },
             "password": {
-              "type": "string"
-            }
-          }
-        },
-        "signupParameters": {
-          "type": "object",
-          "properties": {
-            "email": {
-              "type": "string"
-            },
-            "first_name": {
-              "type": "string"
-            },
-            "last_name": {
-              "type": "string"
-            },
-            "password": {
-              "type": "string"
-            },
-            "bcit_number": {
               "type": "string"
             }
           }
